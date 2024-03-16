@@ -47,6 +47,7 @@ class AssetLoader {
                     },
                     { elementFilter: this.loadAllData ? (() => true) : null }
                 );
+                console.log('loading gsplat asset(asset-loader.ts)');
                 asset.on('load', () => {
                     stopSpinner();
                     resolve(new Splat(asset));

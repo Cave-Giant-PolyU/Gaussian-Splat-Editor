@@ -186,9 +186,9 @@ class Scene extends EventHandler {
 
         // load scene assets
         const promises: Promise<any>[] = [];
-
         // load model
         if (config.model.url) {
+            console.log('loading model(scene.ts)');
             promises.push(this.assetLoader.loadModel({
                 url: config.model.url,
                 filename: config.model.filename

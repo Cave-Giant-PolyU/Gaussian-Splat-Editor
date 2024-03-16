@@ -12,7 +12,7 @@ const patchGizmoMaterials = (gizmo: TransformGizmo) => {
         material.opacity = 0.8;
     };
 
-    // patch opacity
+    // patch opacity 
     const axis = gizmo._materials.axis;
     patch(axis.x.cullBack);
     patch(axis.x.cullNone);
@@ -83,8 +83,8 @@ class TransformTool {
             this.ops = this.ops.filter((op) => {
                 const e = op.entity;
                 return !op.old.position.equals(e.getLocalPosition()) ||
-                       !op.old.rotation.equals(e.getLocalRotation()) ||
-                       !op.old.scale.equals(e.getLocalScale());
+                    !op.old.rotation.equals(e.getLocalRotation()) ||
+                    !op.old.scale.equals(e.getLocalScale());
             });
 
             if (this.ops.length > 0) {
@@ -104,8 +104,16 @@ class TransformTool {
             scene.forceRender = true;
         });
     }
-
+    //选择文件激活
+    selectActivate(index: number) {
+        let indexSplat = this.scene.getElementsByType(ElementType.splat)[index];
+        if (indexSplat != null) {
+            let indexSplatEntity = indexSplat.entity;
+            this.gizmo.attach([indexSplatEntity]);
+        }
+    }
     activate() {
+        //源码
         this.entities = this.scene.getElementsByType(ElementType.splat).map((splat: Splat) => splat.entity);
         this.gizmo.attach(this.entities);
     }

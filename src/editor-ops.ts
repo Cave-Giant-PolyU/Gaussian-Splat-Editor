@@ -33,8 +33,8 @@ const download = (filename: string, data: ArrayBuffer) => {
     if (document.createEvent) {
         const e = document.createEvent("MouseEvents");
         e.initMouseEvent("click", true, true, window,
-                         0, 0, 0, 0, 0, false, false, false,
-                         false, 0, null);
+            0, 0, 0, 0, 0, false, false, false,
+            false, 0, null);
         lnk.dispatchEvent(e);
     } else {
         // @ts-ignore
@@ -56,6 +56,7 @@ const sendToRemoteStorage = async (filename: string, data: ArrayBuffer, remoteSt
 };
 
 interface SplatDef {
+    fileName: string,
     element: Splat,
     data: GSplatData,
     render: SplatRender,
@@ -92,6 +93,7 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
             const resource = splatElement.asset.resource;
             const splatData = resource.splatData;
             const splatRender = resource.splat;
+            const splatFileName = splatElement.asset.file.filename;
 
             if (splatData && splatRender) {
                 // make a copy of the opacity channel because that's what we'll be modifying with edits
@@ -102,6 +104,7 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
 
                 // store splat info
                 splatDefs.push({
+                    fileName: splatFileName,
                     element: splatElement,
                     data: splatData,
                     render: splatRender,
@@ -142,11 +145,11 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
                 mat.setLookAt(vec, vec2, Math.abs(Vec3.UP.dot(debugPlane)) > 0.99 ? Vec3.FORWARD : Vec3.UP);
 
                 const lines = [
-                    new Vec3(-1,-1, 0), new Vec3( 1,-1, 0),
-                    new Vec3( 1,-1, 0), new Vec3( 1, 1, 0),
-                    new Vec3( 1, 1, 0), new Vec3(-1, 1, 0),
-                    new Vec3(-1, 1, 0), new Vec3(-1,-1, 0),
-                    new Vec3( 0, 0, 0), new Vec3( 0, 0,-1)
+                    new Vec3(-1, -1, 0), new Vec3(1, -1, 0),
+                    new Vec3(1, -1, 0), new Vec3(1, 1, 0),
+                    new Vec3(1, 1, 0), new Vec3(-1, 1, 0),
+                    new Vec3(-1, 1, 0), new Vec3(-1, -1, 0),
+                    new Vec3(0, 0, 0), new Vec3(0, 0, -1)
                 ];
                 for (let i = 0; i < lines.length; ++i) {
                     mat.transformPoint(lines[i], lines[i]);
@@ -263,7 +266,20 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
     events.on('showGrid', (value: boolean) => {
         scene.grid.visible = value;
     });
-
+    //按照文件选择点云
+    events.on('fileSelectAll', (fileindex: string) => {
+        let numberToolIndex = parseInt(fileindex);
+        const splatDef = splatDefs[numberToolIndex];        if (splatDef) {
+            console.log('Found splatDef with matching filename:', splatDef);
+            const splatData = splatDef.data;
+            const selection = splatData.getProp('selection') as Float32Array;
+            const opacity = splatData.getProp('opacity') as Float32Array;
+            processSelection(selection, opacity, 'set', (i) => !selection[i]);
+        } else {
+            console.log('No splatDef found with matching filename');
+        }
+        updateSelection();
+    });
     events.on('selectAll', () => {
         splatDefs.forEach((splatDef) => {
             const splatData = splatDef.data;
@@ -488,7 +504,7 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
     events.on('allData', (value: boolean) => {
         scene.assetLoader.loadAllData = value;
     });
-
+    //合并点云采取先分别生成PLY文件，然后再合并的方式
     events.on('export', (format: string) => {
         const removeExtension = (filename: string) => {
             return filename.substring(0, filename.length - path.getExtension(filename).length);
@@ -504,40 +520,145 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
 
         // setTimeout so spinner has a chance to activate
         setTimeout(async () => {
-            const splatDef = splatDefs[0];
-
-            let data;
+            const combinedData: Uint8Array[] = [];
+            splatDefs.forEach((splatDef, index) => {
+                let data;
+                let worldTransform = splatDef.element.root.getWorldTransform();
+                switch (format) {
+                    case 'ply':
+                        data = convertPly(splatDef.data, worldTransform);
+                        break;
+                    case 'ply-compressed':
+                        data = convertPlyCompressed(splatDef.data, worldTransform);
+                        break;
+                    case 'splat':
+                        data = convertSplat(splatDef.data, splatDef.element.worldTransform);
+                        break;
+                }
+                combinedData.push(data);
+            });
+            //合并点云文件
+            const final = mergeMultiplePlyFiles(combinedData);
             let extension;
             switch (format) {
                 case 'ply':
-                    data = convertPly(splatDef.data, splatDef.element.root.getWorldTransform());
                     extension = '.cleaned.ply';
                     break;
                 case 'ply-compressed':
-                    data = convertPlyCompressed(splatDef.data, splatDef.element.root.getWorldTransform());
                     extension = '.compressed.ply';
                     break;
                 case 'splat':
-                    data = convertSplat(splatDef.data, splatDef.element.worldTransform);
                     extension = '.splat';
                     break;
             }
 
-            const filename = `${removeExtension(splatDef.element.asset.file.filename)}${extension}`;
-
+            let fileNames = splatDefs.map(def => removeExtension(def.fileName)).join('_');           
+            const outputFilename = `${fileNames}_combined${extension}`;
+            //保留远程存储功能（后续）
             if (remoteStorageDetails) {
                 // write data to remote storage
-                await sendToRemoteStorage(filename, data, remoteStorageDetails);
+                await sendToRemoteStorage(outputFilename, final, remoteStorageDetails);
             } else {
                 // download file to local machine
-                download(filename, data);
+                download(outputFilename, final);
             }
-
             stopSpinner();
             editorUI.showInfo(null);
             lastExportCursor = editHistory.cursor;
+            //源码
+            // console.log('exporting splatDefs:');
+            // console.log(splatDefs)
+            // const splatDef = splatDefs[0];
+
+            // let data;
+            // let extension;
+            // switch (format) {
+            //     case 'ply':
+            //         data = convertPly(splatDef.data, splatDef.element.root.getWorldTransform());
+            //         extension = '.cleaned.ply';
+            //         break;
+            //     case 'ply-compressed':
+            //         data = convertPlyCompressed(splatDef.data, splatDef.element.root.getWorldTransform());
+            //         extension = '.compressed.ply';
+            //         break;
+            //     case 'splat':
+            //         data = convertSplat(splatDef.data, splatDef.element.worldTransform);
+            //         extension = '.splat';
+            //         break;
+            // }
+
+            // const filename = `${removeExtension(splatDef.element.asset.file.filename)}${extension}`;
+
+            // if (remoteStorageDetails) {
+            //     // write data to remote storage
+            //     await sendToRemoteStorage(filename, data, remoteStorageDetails);
+            // } else {
+            //     // download file to local machine
+            //     download(filename, data);
+            // }
+
+            // stopSpinner();
+            // editorUI.showInfo(null);
+            // lastExportCursor = editHistory.cursor;
         });
     });
+    //合并多个PLY文件
+    function mergeMultiplePlyFiles(plyFiles: Uint8Array[]): Uint8Array {
+        const decoder = new TextDecoder("utf-8");
+        const encoder = new TextEncoder();
+
+        // 用于存储更新后的总顶点数
+        let totalVertexCount = 0;
+        // 存储所有数据部分
+        const dataParts: Uint8Array[] = [];
+
+        // 遍历所有文件，累加顶点数并收集数据部分
+        plyFiles.forEach((ply, index) => {
+            const headerEnd = indexOfArray(ply, encoder.encode(`\nend_header\n`))+ `\nend_header\n`.length;
+            const header = decoder.decode(ply.slice(0, headerEnd ));
+            const vertexCount = parseInt(header.match(/element vertex (\d+)/)[1]);
+            totalVertexCount += vertexCount;
+            const dataPart = ply.slice(headerEnd);
+            dataParts.push(dataPart);
+        });
+
+        // 以第一个文件的头部为基础，更新顶点数
+
+        const headerEnd1 = indexOfArray(plyFiles[0], encoder.encode(`\nend_header\n`));
+        let header1 = decoder.decode(plyFiles[0].slice(0, headerEnd1 + `\nend_header\n`.length));
+        header1 = header1.replace(/element vertex \d+/, `element vertex ${totalVertexCount}`);
+        const updatedHeader1Bytes = encoder.encode(header1);
+
+        // 计算最终文件的总长度
+        const totalLength = updatedHeader1Bytes.length + dataParts.reduce((acc, part) => acc + part.length, 0);
+        // 创建新的Uint8Array并填充数据
+        const mergedPly = new Uint8Array(totalLength);
+        let offset = 0;
+        mergedPly.set(updatedHeader1Bytes, offset);
+        offset += updatedHeader1Bytes.length;
+        
+        dataParts.forEach(part => {
+            mergedPly.set(part, offset);
+            offset += part.length;
+        });
+        return mergedPly;
+    }
+    //在一个数组中查找另一个数组的位置（定位Endfile）
+    function indexOfArray(haystack: Uint8Array, needle: Uint8Array) {
+        for (let i = 0; i < haystack.length - needle.length + 1; i++) {
+            let match = true;
+            for (let j = 0; j < needle.length; j++) {
+                if (haystack[i + j] !== needle[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }
 
 export { registerEvents };

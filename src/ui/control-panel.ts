@@ -367,17 +367,16 @@ class ControlPanel extends Panel {
             class: 'control-label',
             text: 'Load all PLY data'
         });
-
         const allDataToggle = new BooleanInput({
             class: 'control-element',
             value: true
         });
-
+     
         allData.append(allDataLabel);
         allData.append(allDataToggle);
 
         optionsPanel.append(allData);
-
+       
         // append
         this.content.append(cameraPanel);
         this.content.append(selectionPanel);

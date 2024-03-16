@@ -13,7 +13,7 @@ class EditorUI {
     filenameLabel: Label;
     errorPopup: InfoBox;
     infoPopup: InfoBox;
-
+    allFileList: Container;
     constructor(events: Events, remoteStorageMode: boolean) {
         // favicon
         const link = document.createElement('link');
@@ -47,14 +47,19 @@ class EditorUI {
         const filenameLabel = new Label({
             id: 'filename-label'
         });
-
         // canvas container
         const canvasContainer = new Container({
             id: 'canvas-container'
         });
+        // all file list(edit by Hantao)
+        const allFileList = new Container({
+            id: 'all-file-list',
+            
+        });
+
+        // allFileList.append(filelistLabel)
         canvasContainer.dom.appendChild(canvas);
         canvasContainer.append(filenameLabel);
-
         // control panel
         const controlPanel = new ControlPanel(events, remoteStorageMode);
 
@@ -64,6 +69,7 @@ class EditorUI {
         });
 
         controlPanel.append(fileSelect);
+        controlPanel.append(allFileList);
 
         editorContainer.append(toolbar);
         editorContainer.append(controlPanel);
@@ -99,7 +105,7 @@ class EditorUI {
         this.filenameLabel = filenameLabel;
         this.errorPopup = errorPopup;
         this.infoPopup = infoPopup;
-
+        this.allFileList = allFileList;
         document.body.appendChild(appContainer.dom);
 
         window.showError = (err: string) => this.showError(err);
