@@ -90,7 +90,7 @@ const initDropHandler = (canvas: HTMLCanvasElement, scene: Scene, editorUI: Edit
             }
             // click事件监听器
             fileButton.addEventListener('click', () => {
-                events.fire('fileSelectAll', file.name);
+                events.fire('fileSelectAll', fileLabel.dataset.index);
             });
             moveButton.addEventListener('click',() =>{
                 events.fire('fileSelectTool:activate', 'Move',fileLabel.dataset.index);

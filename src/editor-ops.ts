@@ -267,9 +267,9 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
         scene.grid.visible = value;
     });
     //按照文件选择点云
-    events.on('fileSelectAll', (filename: string) => {
-        const splatDef = splatDefs.find(splatDef => splatDef.fileName === filename);
-        if (splatDef) {
+    events.on('fileSelectAll', (fileindex: string) => {
+        let numberToolIndex = parseInt(fileindex);
+        const splatDef = splatDefs[numberToolIndex];        if (splatDef) {
             console.log('Found splatDef with matching filename:', splatDef);
             const splatData = splatDef.data;
             const selection = splatData.getProp('selection') as Float32Array;
