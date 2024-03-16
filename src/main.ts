@@ -46,15 +46,9 @@ const getURLArgs = () => {
 
     return config;
 };
-<<<<<<< HEAD
 //更改过源码（添加移动、旋转、缩放、选择按钮）
 const initDropHandler = (canvas: HTMLCanvasElement, scene: Scene, editorUI: EditorUI, events: Events) => {
     let index = 0;
-=======
-
-const initDropHandler = (canvas: HTMLCanvasElement, scene: Scene) => {
-    // add a 'choose file' button
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     const selector = document.createElement('input');
     selector.setAttribute('id', 'file-selector');
     selector.setAttribute('type', 'file');
@@ -64,7 +58,6 @@ const initDropHandler = (canvas: HTMLCanvasElement, scene: Scene) => {
         if (files.length > 0) {
             const file = selector.files[0];
             scene.loadModel(URL.createObjectURL(file), file.name);
-<<<<<<< HEAD
             const fileLabel = document.createElement('label');
             fileLabel.textContent = file.name;
             fileLabel.dataset.index = index.toString();
@@ -125,12 +118,6 @@ const initDropHandler = (canvas: HTMLCanvasElement, scene: Scene) => {
     };
     document.getElementById('file-selector-container')?.appendChild(selector);
     
-=======
-        }
-    };
-    document.getElementById('file-selector-container')?.appendChild(selector);
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     // also support user dragging and dropping a local glb file onto the canvas
     CreateDropHandler(canvas, urls => {
         const modelExtensions = ['.ply'];
@@ -198,11 +185,7 @@ const main = async () => {
 
     registerEvents(events, editHistory, scene, editorUI, remoteStorageDetails);
 
-<<<<<<< HEAD
     initDropHandler(editorUI.canvas, scene, editorUI, events);
-=======
-    initDropHandler(editorUI.canvas, scene);
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
 
     // load async models
     await scene.load();

@@ -4,10 +4,7 @@ interface Tool {
     ToolName: string;
 
     activate: () => void;
-<<<<<<< HEAD
     selectActivate: (index: number) => void;
-=======
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     deactivate: () => void;
 }
 
@@ -15,10 +12,7 @@ class ToolManager {
     tools = new Map<string, Tool>();
     events: Events;
     active: Tool | null = null;
-<<<<<<< HEAD
     selectActive: Tool | null = null;
-=======
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
 
     constructor(events: Events) {
         this.events = events;
@@ -26,7 +20,6 @@ class ToolManager {
         this.events.on('tool:activate', (toolName: string) => {
             this.activate(toolName);
         });
-<<<<<<< HEAD
         this.events.on('fileSelectTool:activate', (toolName: string, toolIndex: string) => {
             this.selectActivate(toolName,toolIndex);
         });
@@ -37,12 +30,6 @@ class ToolManager {
         this.events.function('fileSelectTool:active', () => {
             return this.selectActive?.ToolName;
         });
-=======
-
-        this.events.function('tool:active', () => {
-            return this.active?.ToolName;
-        });
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     }
 
     register(tool: Tool) {
@@ -52,7 +39,6 @@ class ToolManager {
     get(toolName: string) {
         return (toolName && this.tools.get(toolName)) ?? null;
     }
-<<<<<<< HEAD
     selectActivate(toolName: string | null, toolIndex: string | null) {
         const newTool = this.get(toolName);
         if(this.active != null){
@@ -82,12 +68,6 @@ class ToolManager {
         if(this.selectActive != null){
             this.selectActivate(null,null);
         }
-=======
-
-    activate(toolName: string | null) {
-        const newTool = this.get(toolName);
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         if (newTool === this.active) {
             // re-activating the currently active tool deactivates it
             if (newTool) {

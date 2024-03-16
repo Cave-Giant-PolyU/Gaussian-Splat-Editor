@@ -93,10 +93,7 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
             const resource = splatElement.asset.resource;
             const splatData = resource.splatData;
             const splatRender = resource.splat;
-<<<<<<< HEAD
             const splatFileName = splatElement.asset.file.filename;
-=======
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
 
             if (splatData && splatRender) {
                 // make a copy of the opacity channel because that's what we'll be modifying with edits
@@ -107,10 +104,7 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
 
                 // store splat info
                 splatDefs.push({
-<<<<<<< HEAD
                     fileName: splatFileName,
-=======
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
                     element: splatElement,
                     data: splatData,
                     render: splatRender,
@@ -151,19 +145,11 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
                 mat.setLookAt(vec, vec2, Math.abs(Vec3.UP.dot(debugPlane)) > 0.99 ? Vec3.FORWARD : Vec3.UP);
 
                 const lines = [
-<<<<<<< HEAD
                     new Vec3(-1, -1, 0), new Vec3(1, -1, 0),
                     new Vec3(1, -1, 0), new Vec3(1, 1, 0),
                     new Vec3(1, 1, 0), new Vec3(-1, 1, 0),
                     new Vec3(-1, 1, 0), new Vec3(-1, -1, 0),
                     new Vec3(0, 0, 0), new Vec3(0, 0, -1)
-=======
-                    new Vec3(-1,-1, 0), new Vec3( 1,-1, 0),
-                    new Vec3( 1,-1, 0), new Vec3( 1, 1, 0),
-                    new Vec3( 1, 1, 0), new Vec3(-1, 1, 0),
-                    new Vec3(-1, 1, 0), new Vec3(-1,-1, 0),
-                    new Vec3( 0, 0, 0), new Vec3( 0, 0,-1)
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
                 ];
                 for (let i = 0; i < lines.length; ++i) {
                     mat.transformPoint(lines[i], lines[i]);
@@ -280,7 +266,6 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
     events.on('showGrid', (value: boolean) => {
         scene.grid.visible = value;
     });
-<<<<<<< HEAD
     //按照文件选择点云
     events.on('fileSelectAll', (filename: string) => {
         const splatDef = splatDefs.find(splatDef => splatDef.fileName === filename);
@@ -295,9 +280,6 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
         }
         updateSelection();
     });
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     events.on('selectAll', () => {
         splatDefs.forEach((splatDef) => {
             const splatData = splatDef.data;
@@ -522,11 +504,7 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
     events.on('allData', (value: boolean) => {
         scene.assetLoader.loadAllData = value;
     });
-<<<<<<< HEAD
     //合并点云采取先分别生成PLY文件，然后再合并的方式
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     events.on('export', (format: string) => {
         const removeExtension = (filename: string) => {
             return filename.substring(0, filename.length - path.getExtension(filename).length);
@@ -542,7 +520,6 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
 
         // setTimeout so spinner has a chance to activate
         setTimeout(async () => {
-<<<<<<< HEAD
             const combinedData: Uint8Array[] = [];
             splatDefs.forEach((splatDef, index) => {
                 let data;
@@ -571,28 +548,10 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
                     extension = '.compressed.ply';
                     break;
                 case 'splat':
-=======
-            const splatDef = splatDefs[0];
-
-            let data;
-            let extension;
-            switch (format) {
-                case 'ply':
-                    data = convertPly(splatDef.data, splatDef.element.root.getWorldTransform());
-                    extension = '.cleaned.ply';
-                    break;
-                case 'ply-compressed':
-                    data = convertPlyCompressed(splatDef.data, splatDef.element.root.getWorldTransform());
-                    extension = '.compressed.ply';
-                    break;
-                case 'splat':
-                    data = convertSplat(splatDef.data, splatDef.element.worldTransform);
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
                     extension = '.splat';
                     break;
             }
 
-<<<<<<< HEAD
             let fileNames = splatDefs.map(def => removeExtension(def.fileName)).join('_');           
             const outputFilename = `${fileNames}_combined${extension}`;
             //保留远程存储功能（后续）
@@ -700,23 +659,6 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
         }
         return -1;
     }
-=======
-            const filename = `${removeExtension(splatDef.element.asset.file.filename)}${extension}`;
-
-            if (remoteStorageDetails) {
-                // write data to remote storage
-                await sendToRemoteStorage(filename, data, remoteStorageDetails);
-            } else {
-                // download file to local machine
-                download(filename, data);
-            }
-
-            stopSpinner();
-            editorUI.showInfo(null);
-            lastExportCursor = editHistory.cursor;
-        });
-    });
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
 }
 
 export { registerEvents };

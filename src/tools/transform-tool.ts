@@ -12,11 +12,7 @@ const patchGizmoMaterials = (gizmo: TransformGizmo) => {
         material.opacity = 0.8;
     };
 
-<<<<<<< HEAD
     // patch opacity 
-=======
-    // patch opacity
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     const axis = gizmo._materials.axis;
     patch(axis.x.cullBack);
     patch(axis.x.cullNone);
@@ -87,13 +83,8 @@ class TransformTool {
             this.ops = this.ops.filter((op) => {
                 const e = op.entity;
                 return !op.old.position.equals(e.getLocalPosition()) ||
-<<<<<<< HEAD
                     !op.old.rotation.equals(e.getLocalRotation()) ||
                     !op.old.scale.equals(e.getLocalScale());
-=======
-                       !op.old.rotation.equals(e.getLocalRotation()) ||
-                       !op.old.scale.equals(e.getLocalScale());
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
             });
 
             if (this.ops.length > 0) {
@@ -113,7 +104,6 @@ class TransformTool {
             scene.forceRender = true;
         });
     }
-<<<<<<< HEAD
     //选择文件激活
     selectActivate(index: number) {
         let indexSplat = this.scene.getElementsByType(ElementType.splat)[index];
@@ -124,10 +114,6 @@ class TransformTool {
     }
     activate() {
         //源码
-=======
-
-    activate() {
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         this.entities = this.scene.getElementsByType(ElementType.splat).map((splat: Splat) => splat.entity);
         this.gizmo.attach(this.entities);
     }
