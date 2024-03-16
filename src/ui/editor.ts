@@ -13,11 +13,7 @@ class EditorUI {
     filenameLabel: Label;
     errorPopup: InfoBox;
     infoPopup: InfoBox;
-<<<<<<< HEAD
     allFileList: Container;
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
     constructor(events: Events, remoteStorageMode: boolean) {
         // favicon
         const link = document.createElement('link');
@@ -51,15 +47,10 @@ class EditorUI {
         const filenameLabel = new Label({
             id: 'filename-label'
         });
-<<<<<<< HEAD
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         // canvas container
         const canvasContainer = new Container({
             id: 'canvas-container'
         });
-<<<<<<< HEAD
         // all file list(edit by Hantao)
         const allFileList = new Container({
             id: 'all-file-list',
@@ -69,11 +60,6 @@ class EditorUI {
         // allFileList.append(filelistLabel)
         canvasContainer.dom.appendChild(canvas);
         canvasContainer.append(filenameLabel);
-=======
-        canvasContainer.dom.appendChild(canvas);
-        canvasContainer.append(filenameLabel);
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         // control panel
         const controlPanel = new ControlPanel(events, remoteStorageMode);
 
@@ -83,10 +69,7 @@ class EditorUI {
         });
 
         controlPanel.append(fileSelect);
-<<<<<<< HEAD
         controlPanel.append(allFileList);
-=======
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
 
         editorContainer.append(toolbar);
         editorContainer.append(controlPanel);
@@ -122,11 +105,7 @@ class EditorUI {
         this.filenameLabel = filenameLabel;
         this.errorPopup = errorPopup;
         this.infoPopup = infoPopup;
-<<<<<<< HEAD
         this.allFileList = allFileList;
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         document.body.appendChild(appContainer.dom);
 
         window.showError = (err: string) => this.showError(err);

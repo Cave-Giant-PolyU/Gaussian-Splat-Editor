@@ -367,28 +367,16 @@ class ControlPanel extends Panel {
             class: 'control-label',
             text: 'Load all PLY data'
         });
-<<<<<<< HEAD
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         const allDataToggle = new BooleanInput({
             class: 'control-element',
             value: true
         });
-<<<<<<< HEAD
      
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         allData.append(allDataLabel);
         allData.append(allDataToggle);
 
         optionsPanel.append(allData);
-<<<<<<< HEAD
        
-=======
-
->>>>>>> 0c0696a404af9486864ab018b11ca45e40907a92
         // append
         this.content.append(cameraPanel);
         this.content.append(selectionPanel);
