@@ -12,6 +12,7 @@ import { RotateTool } from './tools/rotate-tool';
 import { ScaleTool } from './tools/scale-tool';
 import { RectSelection } from './tools/rect-selection';
 import { BrushSelection } from './tools/brush-selection';
+import { CompareSelection } from './tools/compare-two-ponts';
 import { Events } from './events';
 
 declare global {
@@ -58,6 +59,62 @@ const initDropHandler = (canvas: HTMLCanvasElement, scene: Scene) => {
         if (files.length > 0) {
             const file = selector.files[0];
             scene.loadModel(URL.createObjectURL(file), file.name);
+            const fileLabel = document.createElement('label');
+            fileLabel.textContent = file.name;
+            fileLabel.dataset.index = index.toString();
+            fileLabel.style.color = 'white';
+            const fileButton = document.createElement('button');
+            fileButton.textContent = 'Select';
+            fileButton.classList.add('float-right');
+            const moveButton = document.createElement('button');
+            moveButton.textContent = 'Move';
+            const rotateButton = document.createElement('button');
+            rotateButton.textContent = 'Rotate';
+            const scaleButton = document.createElement('button');
+            scaleButton.textContent = 'Scale';
+        
+            // 创建新的div并添加子节点
+            const fileDiv = document.createElement('div');
+            fileDiv.appendChild(document.createElement('br'));
+            fileDiv.appendChild(fileLabel);
+            fileDiv.appendChild(document.createElement('br'));
+            fileDiv.appendChild(fileButton);
+            fileDiv.appendChild(moveButton);
+            fileDiv.appendChild(rotateButton);
+            fileDiv.appendChild(scaleButton);
+
+            // 将div添加到allfile元素中
+            const fileSelectorContainer = document.getElementById('all-file-list');
+            if (fileSelectorContainer) {
+                fileSelectorContainer.appendChild(fileDiv);
+                index++;
+            }
+            // click事件监听器
+            fileButton.addEventListener('click', () => {
+                events.fire('fileSelectAll', fileLabel.dataset.index);
+            });
+            moveButton.addEventListener('click',() =>{
+                events.fire('fileSelectTool:activate', 'Move',fileLabel.dataset.index);
+            });
+            rotateButton.addEventListener('click',() =>{
+                events.fire('fileSelectTool:activate', 'Rotate',fileLabel.dataset.index);
+            });
+            scaleButton.addEventListener('click',() =>{
+                events.fire('fileSelectTool:activate', 'Scale',fileLabel.dataset.index);
+            });
+            events.on('fileSelectTool:activated', (toolName: string | null, toolIndex: string | null) => {
+                const moveButtons = fileDiv.querySelectorAll('button');
+                moveButtons.forEach(button => {
+                    button.style.backgroundColor = '';
+                });
+                if (toolName) {
+                    moveButtons.forEach(button => {
+                        if (button.textContent === toolName && fileLabel.dataset.index === toolIndex) {
+                            button.style.backgroundColor = 'yellow';
+                        }
+                    });
+                }
+            });
         }
     };
     document.getElementById('file-selector-container')?.appendChild(selector);
@@ -120,13 +177,13 @@ const main = async () => {
     );
 
     // tool manager
-    const toolManager = new ToolManager(events);
+    const toolManager = new ToolManager(events,editorUI);
     toolManager.register(new MoveTool(events, editHistory, scene));
     toolManager.register(new RotateTool(events, editHistory, scene));
     toolManager.register(new ScaleTool(events, editHistory, scene));
     toolManager.register(new RectSelection(events, editorUI.canvasContainer.dom));
     toolManager.register(new BrushSelection(events, editorUI.canvasContainer.dom));
-
+    toolManager.register(new CompareSelection(events, editorUI.canvasContainer.dom));
     registerEvents(events, editHistory, scene, editorUI, remoteStorageDetails);
 
     initDropHandler(editorUI.canvas, scene);

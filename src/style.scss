@@ -41,6 +41,32 @@ body {
     border-right: 1px solid $bcg-darker;
 }
 
+#info-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    width: 350px;
+    height: 150px;
+    padding: 10px;
+    color: white;
+    display: flex;
+    justify-content: center;
+    flex-direction: column; 
+    //pointer-events: auto; /* 防止鼠标事件穿透 */
+
+}
+.info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; 
+}
+#select-filename-label {
+    color: $text-primary;
+    text-align: center;
+    font-size: 24px;
+}
+
 #coord-space-toggle.active {
     background-color: $bcg-dark !important;
     color: #f60;
@@ -59,13 +85,47 @@ body {
     margin-right: 10px;
     color: $text-secondary;
 
-    #camera-panel & { content: '\E212'; };
-    #selection-panel & { content: '\E398'; };
-    #modify-panel & { content: '\E130'; };
-    #scene-panel & { content: '\E142'; };
-    #options-panel & { content: '\E134'; };
-    #export-panel & { content: '\E226'; };
-    #keyboard-panel & { content: '\E136'};
+    #camera-panel & {
+        content: '\E212';
+    }
+
+    ;
+
+    #selection-panel & {
+        content: '\E398';
+    }
+
+    ;
+
+    #modify-panel & {
+        content: '\E130';
+    }
+
+    ;
+
+    #scene-panel & {
+        content: '\E142';
+    }
+
+    ;
+
+    #options-panel & {
+        content: '\E134';
+    }
+
+    ;
+
+    #export-panel & {
+        content: '\E226';
+    }
+
+    ;
+
+    #keyboard-panel & {
+        content: '\E136'
+    }
+
+    ;
 }
 
 #file-selector-container {
@@ -96,7 +156,8 @@ body {
     color: $text-primary;
 }
 
-#toolbar-tools-container, #toolbar-help-container {
+#toolbar-tools-container,
+#toolbar-help-container {
     display: flex;
     flex-direction: column;
     flex-grow: 0;
@@ -128,11 +189,11 @@ body {
     text-shadow: 0 0 4px black;
 }
 
-.control-panel > .pcui-panel-header {
+.control-panel>.pcui-panel-header {
     background-color: $bcg-dark;
 }
 
-.control-panel > .pcui-panel-content {
+.control-panel>.pcui-panel-content {
     display: flex;
     flex-direction: column;
 }
@@ -257,15 +318,19 @@ body {
     width: 8px;
     height: 8px;
 }
+
 ::-webkit-scrollbar-track {
     background: #20292b;
 }
+
 ::-webkit-scrollbar-thumb {
     background: #5b7073;
 }
+
 ::-webkit-scrollbar-thumb:hover {
     background: #f60;
 }
+
 ::-webkit-scrollbar-corner {
     background: #2c393c;
 }
@@ -292,4 +357,8 @@ body {
     font-family: 'Proxima Nova Bold', 'Helvetica Neue', Arial, Helvetica, sans-serif;
     font-weight: bold;
     font-style: normal;
+}
+
+.float-right {
+    float: right;
 }

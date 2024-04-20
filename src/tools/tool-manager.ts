@@ -1,9 +1,10 @@
 import { Events } from '../events';
-
+import { EditorUI } from '../ui/editor';
 interface Tool {
     ToolName: string;
 
-    activate: () => void;
+    activate: (editorUI:EditorUI) => void;
+    selectActivate: (index: number,editorUI:EditorUI) => void;
     deactivate: () => void;
 }
 
@@ -11,14 +12,19 @@ class ToolManager {
     tools = new Map<string, Tool>();
     events: Events;
     active: Tool | null = null;
-
-    constructor(events: Events) {
+    selectActive: Tool | null = null;
+    editorUI: EditorUI;
+    constructor(events: Events, editorUI: EditorUI) {
         this.events = events;
-
+        this.editorUI = editorUI;
         this.events.on('tool:activate', (toolName: string) => {
+            console.log("toolName",toolName)
             this.activate(toolName);
         });
-
+        this.events.on('fileSelectTool:activate', (toolName: string, toolIndex: string) => {
+            this.selectActivate(toolName, toolIndex);
+        });
+        //好像是错误的
         this.events.function('tool:active', () => {
             return this.active?.ToolName;
         });
@@ -31,10 +37,36 @@ class ToolManager {
     get(toolName: string) {
         return (toolName && this.tools.get(toolName)) ?? null;
     }
-
+    selectActivate(toolName: string | null, toolIndex: string | null) {
+        const newTool = this.get(toolName);
+        if (this.active != null) {
+            this.activate(null);
+        }
+        if (newTool === this.selectActive) {
+            // re-activating the currently active tool deactivates it
+            if (newTool) {
+                this.selectActivate(null, null);
+            }
+        } else {
+            // deactive old tool
+            if (this.selectActive) {
+                this.selectActive.deactivate();
+            }
+            this.selectActive = newTool;
+            // activate the new
+            if (this.selectActive) {
+                let numberToolIndex = parseInt(toolIndex);
+                this.selectActive.selectActivate(numberToolIndex,this.editorUI);
+            }
+            this.events.fire('fileSelectTool:activated', this.selectActive?.ToolName ?? null, (toolIndex ?? 'default').toString());
+        }
+    }
+    //更改过源码（添加单独选择文件的激活的事件）
     activate(toolName: string | null) {
         const newTool = this.get(toolName);
-
+        if (this.selectActive != null) {
+            this.selectActivate(null, null);
+        }
         if (newTool === this.active) {
             // re-activating the currently active tool deactivates it
             if (newTool) {
@@ -51,7 +83,7 @@ class ToolManager {
 
             // activate the new
             if (this.active) {
-                this.active.activate();
+                this.active.activate(this.editorUI);
             }
 
             this.events.fire('tool:activated', this.active?.ToolName ?? null);

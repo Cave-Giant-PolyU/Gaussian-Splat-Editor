@@ -14,7 +14,7 @@ import { EditorUI } from './ui/editor';
 import { EditHistory, EditOp } from './edit-history';
 import { Element, ElementType } from './element';
 import { Splat } from './splat';
-import { deletedOpacity, DeleteSelectionEditOp, ResetEditOp } from './edit-ops';
+import { deletedOpacity, DeleteSelectionEditOp, ResetEditOp, buildIndex } from './edit-ops';
 import { SplatDebug } from './splat-debug';
 import { convertPly, convertPlyCompressed, convertSplat } from './splat-convert';
 import { startSpinner, stopSpinner } from './ui/spinner';
@@ -263,7 +263,21 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
     events.on('showGrid', (value: boolean) => {
         scene.grid.visible = value;
     });
-
+    //按照文件选择点云
+    events.on('fileSelectAll', (fileindex: string) => {
+        let numberToolIndex = parseInt(fileindex);
+        const splatDef = splatDefs[numberToolIndex];
+        if (splatDef) {
+            console.log('Found splatDef with matching filename:', splatDef);
+            const splatData = splatDef.data;
+            const selection = splatData.getProp('selection') as Float32Array;
+            const opacity = splatData.getProp('opacity') as Float32Array;
+            processSelection(selection, opacity, 'set', (i) => !selection[i]);
+        } else {
+            console.log('No splatDef found with matching filename');
+        }
+        updateSelection();
+    });
     events.on('selectAll', () => {
         splatDefs.forEach((splatDef) => {
             const splatData = splatDef.data;
@@ -436,6 +450,40 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
         });
         updateSelection();
     });
+    //scale info getter
+    events.on('selectPointForScale', (op: string, rect: any) => {
+        console.log("in selecrPointForScale");
+        // splatDefs.forEach((splatDef) => {
+        //     const splatData = splatDef.data;
+        //     const selection = splatData.getProp('selection') as Float32Array;
+        //     const opacity = splatData.getProp('opacity') as Float32Array;
+        //     const x = splatData.getProp('x');
+        //     const y = splatData.getProp('y');
+        //     const z = splatData.getProp('z');
+
+        //     // convert screen rect to camera space
+        //     const camera = scene.camera.entity.camera;
+
+        //     // calculate final matrix
+        //     mat.mul2(camera.camera._viewProjMat, splatDef.element.worldTransform);
+        //     const sx = rect.start.x * 2 - 1;
+        //     const sy = rect.start.y * 2 - 1;
+        //     const ex = rect.end.x * 2 - 1;
+        //     const ey = rect.end.y * 2 - 1;
+
+        //     processSelection(selection, opacity, op, (i) => {
+        //         vec4.set(x[i], y[i], z[i], 1.0);
+        //         mat.transformVec4(vec4, vec4);
+        //         vec4.x /= vec4.w;
+        //         vec4.y = -vec4.y / vec4.w;
+        //         if (vec4.x < sx || vec4.x > ex || vec4.y < sy || vec4.y > ey) {
+        //             return false;
+        //         }
+        //         return true;
+        //     });
+        // });
+        // updateSelection();
+    });
 
     events.on('selectByMask', (op: string, mask: ImageData) => {
         splatDefs.forEach((splatDef) => {
@@ -469,6 +517,88 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
             });
         });
         updateSelection();
+    });
+    //compare two point clouds(select logitic)
+    const selectedPoints: { indice: number, x: number, y: number, z: number }[] = [];
+    events.on('selectByMaskCompare', (op: string, mask: ImageData, refresh: boolean) => {
+        if (refresh) {
+            selectedPoints.length = 0;
+        }
+        //得到所有在选择区域的点云
+        splatDefs.forEach((splatDef) => {
+            const splatData = splatDef.data;
+            const selection = splatData.getProp('selection') as Float32Array;
+            const opacity = splatData.getProp('opacity') as Float32Array;
+            const x = splatData.getProp('x');
+            const y = splatData.getProp('y');
+            const z = splatData.getProp('z');
+
+            // convert screen rect to camera space
+            const camera = scene.camera.entity.camera;
+
+            // calculate final matrix
+            mat.mul2(camera.camera._viewProjMat, splatDef.element.worldTransform);
+            processSelection(selection, opacity, op, (i) => {
+                vec4.set(x[i], y[i], z[i], 1.0);
+                mat.transformVec4(vec4, vec4);
+                vec4.x = vec4.x / vec4.w * 0.5 + 0.5;
+                vec4.y = -vec4.y / vec4.w * 0.5 + 0.5;
+                vec4.z = vec4.z / vec4.w * 0.5 + 0.5;
+
+                if (vec4.x < 0 || vec4.x > 1 || vec4.y < 0 || vec4.y > 1 || vec4.z < 0 || vec4.z > 1) {
+                    return false;
+                }
+
+                const mx = Math.floor(vec4.x * mask.width);
+                const my = Math.floor(vec4.y * mask.height);
+                return mask.data[(my * mask.width + mx) * 4] === 255;
+            });
+        });
+        //目前只支持单个文件
+        const splatData = splatDefs[0].data;
+        const selection = splatData.getProp('selection');
+        const indices = buildIndex(splatData, (i) => selection[i] > 0);
+        //选择区域有点的情况下选择Y轴最高的点
+        if (indices.length != 0) {
+            let highestPoint = { indice: indices[0], x: splatData.getProp('x')[indices[0]], y: splatData.getProp('y')[indices[0]], z: splatData.getProp('z')[indices[0]] };
+            indices.forEach((indice) => {
+                const point = { indice: indice, x: splatData.getProp('x')[indice], y: splatData.getProp('y')[indice], z: splatData.getProp('z')[indice] };
+                if (point.y > highestPoint.y) {
+                    highestPoint = point;
+                }
+                splatData.getProp('selection')[indice] = 0;
+            });
+            //加入选择点
+            selectedPoints.push(highestPoint);
+            //大于两个点的时候删除第一个点（比较最后选的两个点）
+            if (selectedPoints.length > 2) {
+                splatData.getProp('selection')[selectedPoints[0].indice] = 0;
+                selectedPoints.shift();
+            }
+            //选中的点加入选择区域
+            selectedPoints.forEach((point) => {
+                selection[point.indice] = 1; 0
+            });
+            //如果选择两个点 计算两点之间的距离
+            if (selectedPoints.length == 2) {
+                const dx = selectedPoints[0].x - selectedPoints[1].x;
+                const dy = selectedPoints[0].y - selectedPoints[1].y;
+                const dz = selectedPoints[0].z - selectedPoints[1].z;
+                const distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                //两种方式输出距离
+                //console.log(`The distance between the two selected points is ${distance}`);
+                alert(`The distance between the two selected points is ${distance}`);
+            }
+        }
+        //点击空地reset选择
+        else {
+            selectedPoints.forEach((point) => {
+                selection[point.indice] = 0;
+            });
+            selectedPoints.length = 0;
+        }
+        updateSelection();
+
     });
 
     events.on('deleteSelection', () => {
@@ -523,8 +653,9 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
                     break;
             }
 
-            const filename = `${removeExtension(splatDef.element.asset.file.filename)}${extension}`;
-
+            let fileNames = splatDefs.map(def => removeExtension(def.fileName)).join('_');
+            const outputFilename = `${fileNames}_combined${extension}`;
+            //保留远程存储功能（后续）
             if (remoteStorageDetails) {
                 // write data to remote storage
                 await sendToRemoteStorage(filename, data, remoteStorageDetails);
@@ -538,6 +669,63 @@ const registerEvents = (events: Events, editHistory: EditHistory, scene: Scene, 
             lastExportCursor = editHistory.cursor;
         });
     });
+    //合并多个PLY文件
+    function mergeMultiplePlyFiles(plyFiles: Uint8Array[]): Uint8Array {
+        const decoder = new TextDecoder("utf-8");
+        const encoder = new TextEncoder();
+
+        // 用于存储更新后的总顶点数
+        let totalVertexCount = 0;
+        // 存储所有数据部分
+        const dataParts: Uint8Array[] = [];
+
+        // 遍历所有文件，累加顶点数并收集数据部分
+        plyFiles.forEach((ply, index) => {
+            const headerEnd = indexOfArray(ply, encoder.encode(`\nend_header\n`)) + `\nend_header\n`.length;
+            const header = decoder.decode(ply.slice(0, headerEnd));
+            const vertexCount = parseInt(header.match(/element vertex (\d+)/)[1]);
+            totalVertexCount += vertexCount;
+            const dataPart = ply.slice(headerEnd);
+            dataParts.push(dataPart);
+        });
+
+        // 以第一个文件的头部为基础，更新顶点数
+
+        const headerEnd1 = indexOfArray(plyFiles[0], encoder.encode(`\nend_header\n`));
+        let header1 = decoder.decode(plyFiles[0].slice(0, headerEnd1 + `\nend_header\n`.length));
+        header1 = header1.replace(/element vertex \d+/, `element vertex ${totalVertexCount}`);
+        const updatedHeader1Bytes = encoder.encode(header1);
+
+        // 计算最终文件的总长度
+        const totalLength = updatedHeader1Bytes.length + dataParts.reduce((acc, part) => acc + part.length, 0);
+        // 创建新的Uint8Array并填充数据
+        const mergedPly = new Uint8Array(totalLength);
+        let offset = 0;
+        mergedPly.set(updatedHeader1Bytes, offset);
+        offset += updatedHeader1Bytes.length;
+
+        dataParts.forEach(part => {
+            mergedPly.set(part, offset);
+            offset += part.length;
+        });
+        return mergedPly;
+    }
+    //在一个数组中查找另一个数组的位置（定位Endfile）
+    function indexOfArray(haystack: Uint8Array, needle: Uint8Array) {
+        for (let i = 0; i < haystack.length - needle.length + 1; i++) {
+            let match = true;
+            for (let j = 0; j < needle.length; j++) {
+                if (haystack[i + j] !== needle[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            if (match) {
+                return i;
+            }
+        }
+        return -1;
+    }
 }
 
 export { registerEvents };
