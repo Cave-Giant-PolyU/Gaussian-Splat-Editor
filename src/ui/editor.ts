@@ -1,6 +1,7 @@
 import { Container, InfoBox, Label } from 'pcui';
 import { ControlPanel } from './control-panel';
 import { Toolbar } from './toolbar';
+import { InfoWindow } from './info-window';
 import { Events } from '../events';
 import logo from './playcanvas-logo.png';
 
@@ -13,6 +14,8 @@ class EditorUI {
     filenameLabel: Label;
     errorPopup: InfoBox;
     infoPopup: InfoBox;
+    allFileList: Container;
+    infoWindow: InfoWindow; // 添加InfoWindow属性
 
     constructor(events: Events, remoteStorageMode: boolean) {
         // favicon
@@ -52,23 +55,34 @@ class EditorUI {
         const canvasContainer = new Container({
             id: 'canvas-container'
         });
+        // all file list(edit by Hantao)
+        const allFileList = new Container({
+            id: 'all-file-list',
+        });
+
+        // allFileList.append(filelistLabel)
         canvasContainer.dom.appendChild(canvas);
         canvasContainer.append(filenameLabel);
 
         // control panel
         const controlPanel = new ControlPanel(events, remoteStorageMode);
 
+        //infoWindow
+       const infoWindow = new InfoWindow(events);
         // file select
         const fileSelect = new Container({
             id: 'file-selector-container'
         });
 
         controlPanel.append(fileSelect);
+        controlPanel.append(allFileList);
+        //infoWindow
+        canvasContainer.append(infoWindow);
 
         editorContainer.append(toolbar);
         editorContainer.append(controlPanel);
         editorContainer.append(canvasContainer);
-
+        // editorContainer.append(infoWindow);
         // error box 
         const errorPopup = new InfoBox({
             class: 'error-popup',
@@ -90,7 +104,7 @@ class EditorUI {
 
         appContainer.append(editorContainer);
         appContainer.append(topContainer);
-
+        
         this.appContainer = appContainer;
         this.overlaysContainer = topContainer;
         this.controlPanel = controlPanel;
@@ -99,7 +113,8 @@ class EditorUI {
         this.filenameLabel = filenameLabel;
         this.errorPopup = errorPopup;
         this.infoPopup = infoPopup;
-
+        this.allFileList = allFileList;
+        this.infoWindow = infoWindow; // 添加InfoWindow
         document.body.appendChild(appContainer.dom);
 
         window.showError = (err: string) => this.showError(err);

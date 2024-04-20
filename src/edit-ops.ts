@@ -4,7 +4,7 @@ import { Scene } from './scene';
 const deletedOpacity = -1000;
 
 // build a splat index based on a boolean predicate
-const buildIndex = (splatData: GSplatData, pred: (i: number) => boolean) => {
+export const buildIndex = (splatData: GSplatData, pred: (i: number) => boolean) => {
     let numSplats = 0;
     for (let i = 0; i < splatData.numSplats; ++i) {
         if (pred(i)) numSplats++;

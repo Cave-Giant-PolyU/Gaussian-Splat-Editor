@@ -3,7 +3,7 @@ import { Events } from '../events';
 import { version as supersplatVersion } from '../../package.json';
 
 class ControlPanel extends Panel {
-    constructor(events: Events, remoteStorageMode: boolean, args = { }) {
+    constructor(events: Events, remoteStorageMode: boolean, args = {}) {
         Object.assign(args, {
             headerText: `SUPER SPLAT v${supersplatVersion}`,
             id: 'control-panel',
@@ -358,7 +358,11 @@ class ControlPanel extends Panel {
             class: 'control-panel',
             headerText: 'OPTIONS'
         });
-
+        const CompareSelection = new Button({
+            class: 'control-element',
+            text: 'Compare two points ',
+           
+        });
         const allData = new Container({
             class: 'control-parent'
         });
@@ -376,8 +380,8 @@ class ControlPanel extends Panel {
         allData.append(allDataLabel);
         allData.append(allDataToggle);
 
+        optionsPanel.append(CompareSelection);
         optionsPanel.append(allData);
-
         // append
         this.content.append(cameraPanel);
         this.content.append(selectionPanel);
@@ -392,10 +396,14 @@ class ControlPanel extends Panel {
         brushSelectButton.on('click', () => {
             events.fire('tool:activate', 'BrushSelection');
         });
+        CompareSelection.on('click', () => {
+            events.fire('tool:activate', 'CompareSelection');
+        });
 
         events.on('tool:activated', (toolName: string) => {
             rectSelectButton.class[toolName === 'RectSelection' ? 'add' : 'remove']('active');
             brushSelectButton.class[toolName === 'BrushSelection' ? 'add' : 'remove']('active');
+            CompareSelection.class[toolName === 'CompareSelection' ? 'add' : 'remove']('active');
         });
 
         // radio logic
@@ -530,12 +538,27 @@ class ControlPanel extends Panel {
 
         // keyboard handler
         document.addEventListener('keydown', (e) => {
+            if (e.target instanceof HTMLInputElement) {
+                return;
+            }
             if (e.ctrlKey || e.metaKey) {
                 // handle meta/ctrl keys
                 if (!e.shiftKey && e.key === 'z') {
                     events.fire('edit:undo');
                 } else if (e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
                     events.fire('edit:redo');
+                }else if (e.key === '4') {
+                    events.fire('keyMovement','MoveOnXleft','More');
+                } else if (e.key === '6') {
+                    events.fire('keyMovement','MoveOnXright','More');
+                } else if (e.key === '8') {
+                    events.fire('keyMovement','MoveOnYup','More');
+                } else if (e.key === '2') {
+                    events.fire('keyMovement','MoveOnYdown','More');
+                } else if (e.key === '7') {
+                    events.fire('keyMovement','MoveOnZfront','More');
+                }else if (e.key === '9') {
+                    events.fire('keyMovement','MoveOnZback','More');
                 }
             } else {
                 // handle non-meta/ctrl keys
@@ -543,13 +566,28 @@ class ControlPanel extends Panel {
                     events.fire('deleteSelection');
                 } else if (e.key === 'Escape') {
                     events.fire('tool:activate', '');
-                } else if (e.key === '1') {
-                    events.fire('tool:activate', 'Move');
+                } else if (e.key === '4') {
+                    events.fire('keyMovement','MoveOnXleft');
+                } else if (e.key === '6') {
+                    events.fire('keyMovement','MoveOnXright');
+                } else if (e.key === '8') {
+                    events.fire('keyMovement','MoveOnYup');
                 } else if (e.key === '2') {
-                    events.fire('tool:activate', 'Rotate');
-                } else if (e.key === '3') {
-                    events.fire('tool:activate', 'Scale');
-                } else if (e.key === 'R' || e.key === 'r') {
+                    events.fire('keyMovement','MoveOnYdown');
+                } else if (e.key === '7') {
+                    events.fire('keyMovement','MoveOnZfront');
+                }
+                else if (e.key === '9') {
+                    events.fire('keyMovement','MoveOnZback');
+                }
+                //else if (e.key === '1') {
+                //    events.fire('tool:activate', 'Move');
+                //} else if (e.key === '2') {
+                //    events.fire('tool:activate', 'Rotate');
+                //} else if (e.key === '3') {
+                //    events.fire('tool:activate', 'Scale');
+                //} 
+                else if (e.key === 'R' || e.key === 'r') {
                     events.fire('tool:activate', 'RectSelection');
                 } else if (e.key === 'G' || e.key === 'g') {
                     showGridToggle.value = !showGridToggle.value;
@@ -560,6 +598,7 @@ class ControlPanel extends Panel {
                 } else if (e.key === 'B' || e.key === 'b') {
                     events.fire('tool:activate', 'BrushSelection');
                 } else if (e.key === 'I' || e.key === 'i') {
+                    7
                     events.fire('invertSelection');
                 } else if (e.key === '[') {
                     events.fire('brushSelection:smaller');
